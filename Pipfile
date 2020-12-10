@@ -1,0 +1,31 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[packages]
+ipython = "*"
+pytest-django = "*"
+factory-boy = "*"
+pytest = "*"
+django-debug-toolbar = "*"
+django-extensions = "*"
+django-model-utils = "*"
+django-rest-auth = "*"
+django-rest-swagger = "*"
+django = "*"
+djangorestframework-jwt = "*"
+djangorestframework = "*"
+drf-yasg = "*"
+psycopg2-binary = "*"
+django-environ = "*"
+django-split-settings = '*'
+python-memcached = "*"
+django-filter = "*"
+pytest-asyncio = "*"
+aiohttp = "*"
+requests = "*"
+typing-extensions = "*"
+
+[requires]
+python_version = "3.8"

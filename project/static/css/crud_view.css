@@ -1,0 +1,270 @@
+.crud-container {
+  background-color: white;
+  opacity: 0.9;
+  border-width: 0px;
+  border-radius: 3px;
+  padding-top: 10px;
+  border-color: #B6B6B6;
+  border-style: solid;
+  min-width: 500px;
+  align-items: center;
+  align-content: center;
+  margin: 0 auto;
+  height: min-content;
+  min-height: min-content;
+  height: 84vh;
+}
+
+#calendar {
+  overflow-y: scroll !important;
+}
+
+.crud-container h3,
+.crud-container h1,
+.crud-container .links,
+.card-header h2,
+.dynamic-form-add,
+.buttonHolder,
+.delete form,
+legend,
+thead  {
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.crud-container h2 {
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.two-column-forms {
+  display: flex;
+}
+
+.table {
+  min-width: fit-content;
+  max-width: fit-content;
+  max-width: -moz-fit-content;
+  min-width: -moz-max-content;
+  /* border-collapse: inherit; */
+}
+
+.crud-container.delete {
+  width: auto;
+}
+
+.crud-container.delete form {
+  margin: 10px 10px;
+}
+
+.form-worker {
+  padding: 0px 20px;
+  max-width: 400px;
+  margin: 20px auto;
+  font-weight: bold;
+}
+
+#div_id_employing_date div,
+#div_id_passport_date div,
+#div_id_from_date div,
+#div_id_to_date div,
+#div_id_table_date div {
+  display: inline-flex !important;
+}
+
+.forms {
+  overflow-y: scroll;
+  max-height: 70vh;
+  margin-left: 10px;
+}
+
+.detail td {
+  max-width: 130px;
+  text-align: left;
+}
+
+.links {
+  display: inherit;
+}
+
+.dropdown-links {
+  display: -webkit-inline-box;
+  margin-left: 10px;
+}
+
+.links li,
+.dropdown-links li {
+  margin: 0 10px;
+}
+
+.detail .table {
+  margin: 0 5px;
+  max-width: fit-content;
+  min-width: 460px;
+}
+
+.dynamic-form td .form-group div .numberinput.form-control {
+  max-width: 100px;
+}
+
+.dynamic-form td .form-group div .select.form-control {
+  width: auto;
+}
+
+.buttonHolder .btn-primary {
+  width: -webkit-fill-available;
+}
+
+#id_totall_summ_1,
+#id_salary_value_1 {
+  width: 130px;
+  margin-right: 50px;
+}
+
+#id_totall_summ_0,
+#id_salary_value_0 {
+  width: 130px;
+}
+
+.formset_row-salary td .form-group div .numberinput,
+#id_salary_value_0 {
+  max-width: 90px;
+  height: 38px;
+  border-radius: 5px;
+  border-color: darkgray;
+  border-width: 1px;
+  border-style: solid;
+  text-align: -webkit-match-parent;
+}
+
+.formset_row-salary td .form-group div .select {
+  width: 130px;
+  height: 38px;
+  border-radius: 5px;
+  border-color: darkgray;
+  border-width: 1px;
+  border-style: solid;
+}
+
+.formset_row-salary td:nth-child(3) .form-group {
+  text-align: center;
+}
+
+#two-columns-forms-first {
+  margin-right: 20px;
+  min-width: 470px;
+}
+
+#two-columns-forms-first .col-form-label {
+  max-width: 36%;
+}
+
+.form-control {
+  min-width: fit-content !important;
+}
+
+#two-columns-forms,
+#two-columns-forms-second .form-group {
+  display: flex;
+  text-align: center;
+}
+
+#two-columns-forms-second .col-form-label {
+  margin-right: 5px;
+}
+
+.formset_row-barehole_set td:last-child div {
+  width: 2px;
+}
+
+.formset_row-barehole_set td:last-child {
+  padding-bottom: 12px;
+}
+
+.formset_row-barehole_set td:first-child div {
+  margin-right: 10px;
+}
+
+#div_id_is_notificate_send .form-check-label {
+  width: max-content;
+  font-size: x-large;
+  color: tomato;
+}
+
+#div_id_is_notificate_send .form-check-label .checkboxinput.form-check-input {
+  transform: scale(1.5);
+  -webkit-transform: scale(1.5);
+  margin-top: 12px;
+}
+
+#div_id_work_plan,
+#div_id_mech_to_fix,
+#id_mech_plan {
+    width: -webkit-fill-available;
+}
+
+td, th {
+    white-space: nowrap;
+}
+
+#dropdown-menu {
+  margin-left: 15px;
+}
+
+.currency {
+  margin-left: 10px;
+  margin-top: 7px;
+}
+
+@media all and (max-width: 480px) {
+/* @media all and (max-device-width: 480px) { */
+  #div_id_is_notificate_send .form-check-label {
+    width: max-content;
+    font-size: large;
+    color: tomato;
+  }
+
+  #two-columns-forms-first {
+    margin-right: inherit;
+    min-width: inherit;
+  }
+
+  #two-columns-forms-first .col-form-label {
+    max-width: inherit;
+  }
+
+  #two-columns-forms,
+  #two-columns-forms-second .form-group {
+    display: inherit;
+  }
+
+  .col-md-3 {
+      max-width: 40% !important;
+  }
+  .col-md-9 {
+      max-width: 60%;
+  }
+  .forms,
+  .links,
+  h2,
+  .card-body,
+  .card-header {
+    max-width: 330px;
+  }
+  .crud-container {
+    min-width: 200px;
+  }
+  .detail .table {
+    min-width: 150px;
+  }
+  .formset_row-barehole_set td:last-child {
+    padding-top: 38px;
+    padding-bottom: 0px;
+  }
+  .formset_row-barehole_set td:first-child div {
+    margin-right: 0px;
+  }
+  .two-column-forms {
+    display: inherit;
+  }
+}

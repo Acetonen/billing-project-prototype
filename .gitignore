@@ -1,0 +1,9 @@
+env/
+.idea/
+*.pyc
+tmp/
+.cache
+**/settings_compiled.py
+local/
+archive/
+staticfiles/

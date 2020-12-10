@@ -1,0 +1,233 @@
+.preloader {
+   position: absolute;
+   top: 0;
+   left: 0;
+   width: 100%;
+   height: 100%;
+   z-index: 9999;
+   background-image: url('../images/load.gif');
+   background-repeat: no-repeat;
+   background-color: black;
+   background-position: center;
+}
+
+.say-hello {
+	font-family: -webkit-pictograph;
+}
+
+.navbar {
+  background-color: rgba(52, 58, 64, 0.8) !important;
+  padding-bottom: 1px !important;
+}
+
+.interkamen {
+  font-size: 25px !important;
+}
+
+.btn-outline-light {
+  margin-left: 52px;
+  margin-bottom: 5px;
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+}
+
+.logo_name {
+  max-width: 400px;
+  margin-left: 40px;
+  padding-bottom: 30px;
+  padding-top: 0px;
+  margin-top: 0px;
+}
+
+.warning {
+  color: red;
+  font-weight: bold;
+}
+
+a {
+  color: rgb(79, 161, 166);
+  font-weight: bold;
+}
+
+table.table a {
+  color: rgb(79, 161, 166);
+}
+
+body {
+  background-image: url('../images/underworld_1920x1080.jpg');
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
+  background-size: cover;
+  background-color: #464646;
+  justify-content: center;
+  display: block;
+  padding: 10px 10px;
+}
+
+main {
+  display: -webkit-box;
+  padding-top: 60px;
+  margin: 0 auto;
+  /* padding-bottom: 30px; */
+  /* height: -webkit-fill-available; */
+  height: 93vh;
+  min-height: min-content;
+}
+
+footer {
+  width: -webkit-fill-available;
+}
+
+.footer {
+  opacity: 0.9;
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+  bottom: 0;
+}
+
+small {
+  display: -webkit-inline-box;
+}
+
+.jumbotron {
+  opacity: 0.8;
+  background-color: white;
+  margin: 0 auto;
+  height: min-content;
+}
+
+.jumbotron.main-menu {
+  opacity: 0.9;
+  background-color: white;
+}
+
+.jumbotron.list {
+  opacity: 1;
+  background-color: white;
+  max-height: 300 !important;
+}
+
+.worker_archive {
+  color: red;
+}
+
+.asteriskField {
+  display: none;
+}
+
+.navbar-dark .navbar-nav .nav-link {
+    text-align: center;
+}
+
+.money-container {
+  display: flex;
+}
+
+.scrollbar {
+margin-left: 30px;
+float: left;
+height: 300px;
+width: 65px;
+background: #fff;
+overflow-y: scroll;
+margin-bottom: 25px;
+}
+
+.force-overflow {
+min-height: 450px;
+}
+
+::-webkit-scrollbar-track {
+-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+background-color: #F5F5F5;
+border-radius: 10px; }
+
+::-webkit-scrollbar {
+width: 6px;
+background-color: #F5F5F5; }
+
+::-webkit-scrollbar-thumb {
+border-radius: 10px;
+-webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+background-image: -webkit-gradient(linear, left bottom, left top, from(#5ee7df), to(#b490ca));
+background-image: -webkit-linear-gradient(bottom, #5ee7df 0%, #b490ca 100%);
+background-image: linear-gradient(to top, #5ee7df 0%, #b490ca 100%); }
+
+/* ::-webkit-scrollbar {
+    width: 5px;
+}
+::-webkit-scrollbar-track {
+    background: #FFF;
+    -webkit-box-shadow: inset 1px 1px 2px rgba(0,0,0,0.1);
+}
+::-webkit-scrollbar-thumb {
+    background: #CCC;
+    -webkit-box-shadow: inset 1px 1px 2px rgba(0,0,0,0.2);
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #AAA;
+}
+::-webkit-scrollbar-thumb:active {
+    background: #888;
+    -webkit-box-shadow: inset 1px 1px 2px rgba(0,0,0,0.3);
+} */
+
+@media only screen and (min-width: 768px) and (max-width: 1280px) {
+
+  body {
+    background-image: url('../images/underworld_1920x1080.jpg');
+  }
+
+}
+
+@media all and (max-width: 480px) {
+/* @media all and (max-device-width: 480px) { */
+
+  main {
+    padding-bottom: 0px;
+    height: 82vh;
+    min-height: min-content;
+  }
+
+  .navbar {
+    background-color: rgba(52, 58, 64, 1) !important;
+  }
+
+  body {
+    background-image: url('../images/underworld_600x1080.jpg');
+  }
+
+  .footer {
+    opacity: 0.9;
+    color: white;
+    flex-shrink: 0;
+    position: relative;
+    bottom: 0;
+    /* margin-top: 42px; */
+  }
+
+  small {
+    display: block;
+  }
+
+  .jumbotron .display-4 {
+    font-size: 16;
+  }
+
+  .logo_name {
+    max-width: 300px;
+    padding: 5px;
+    border-radius: 5px;
+    margin-bottom: 30px;
+    margin-left: 0px;
+    background-color: rgba(255, 255, 255, 0.6);
+  }
+}

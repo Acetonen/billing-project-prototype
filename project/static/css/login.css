@@ -1,0 +1,27 @@
+.form-signin {
+  max-width: 300px;
+  margin: 0 auto;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 10px;
+}
+
+.form-password-change {
+  max-width: 300px;
+  margin: 0 auto;
+  font-weight: bold;
+  color: white;
+}
+
+.form-password-change .h3 {
+  color: black;
+}
+
+#hint_id_new_password1,
+.reset-password {
+  color: white !important;
+}
+
+.text-center {
+  margin: 0 auto;
+}
