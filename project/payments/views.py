@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import mixins, viewsets, permissions
@@ -102,12 +103,13 @@ class TransactionsViewSet(mixins.RetrieveModelMixin,
         serializer.is_valid(raise_exception=True)
         receiver = UserModel.objects.get(email=serializer.validated_data['user_email'])
 
-        sender_wallet = (MakeTransferInteractor()
-                         .set_params(request.user, receiver, serializer.validated_data['sum'])
-                         .execute())
-        (CreateTransactionInteractor()
-         .set_params(request.user, receiver, serializer.validated_data['sum'], False)
-         .execute())
+        with transaction.atomic():
+            sender_wallet = (MakeTransferInteractor()
+                             .set_params(request.user, receiver, serializer.validated_data['sum'])
+                             .execute())
+            (CreateTransactionInteractor()
+             .set_params(request.user, receiver, serializer.validated_data['sum'], False)
+             .execute())
 
         return Response(WalletSerializer(sender_wallet).data)
 
