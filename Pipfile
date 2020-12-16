@@ -26,6 +26,7 @@ pytest-asyncio = "*"
 aiohttp = "*"
 requests = "*"
 typing-extensions = "*"
+black = "==20.8b1"
 
 [requires]
 python_version = "3.8"
