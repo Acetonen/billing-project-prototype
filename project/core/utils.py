@@ -10,7 +10,7 @@ def perform_errors(errors):
 
     if isinstance(errors, list):
         if all(isinstance(error, six.text_type) for error in errors):
-            return ' '.join(errors)
+            return " ".join(errors)
 
         return [perform_errors(error) for error in errors]
 
@@ -43,7 +43,7 @@ def get_first_error_code(codes):
     return codes
 
 
-STATUS = {404: 'not_found_error', 400: 'validation_error'}
+STATUS = {404: "not_found_error", 400: "validation_error"}
 
 
 def custom_exception_handler(exc, context):
@@ -52,31 +52,36 @@ def custom_exception_handler(exc, context):
     if response is not None:
         data = response.data
         errors = perform_errors(data)
-        response.data = {'errors': errors}
+        response.data = {"errors": errors}
         try:
             error_field, error_message = get_first_error_code(data)
         except ValueError:
-            error_field, error_message = settings.REST_FRAMEWORK["NON_FIELD_ERRORS_KEY"], get_first_error_code(data)
+            error_field, error_message = (
+                settings.REST_FRAMEWORK["NON_FIELD_ERRORS_KEY"],
+                get_first_error_code(data),
+            )
         if isinstance(exc, Http404):
-            response.data['code'] = 'not_found'
+            response.data["code"] = "not_found"
         else:
-            response.data['code'] = error_message.code
+            response.data["code"] = error_message.code
 
-        if response.data['code'] == 'required':
-            response.data['message'] = "{field} {message}".format(
+        if response.data["code"] == "required":
+            response.data["message"] = "{field} {message}".format(
                 field=error_field.capitalize(),
-                message=error_message.replace("This", "")
+                message=error_message.replace("This", ""),
             )
         else:
             if error_field == settings.REST_FRAMEWORK["NON_FIELD_ERRORS_KEY"]:
-                response.data['message'] = str(error_message)
+                response.data["message"] = str(error_message)
             else:
                 try:
                     label = data.serializer.fields[error_field].label
                 except (AttributeError, KeyError):
-                    label = error_field.replace('_', ' ')
+                    label = error_field.replace("_", " ")
 
-                response.data['message'] = f'Field {label} is not filled correctly: {error_message}'
-        response.data['status_code'] = response.status_code
-        response.data['status'] = STATUS.get(response.status_code, 'error')
+                response.data[
+                    "message"
+                ] = f"Field {label} is not filled correctly: {error_message}"
+        response.data["status_code"] = response.status_code
+        response.data["status"] = STATUS.get(response.status_code, "error")
     return response

@@ -5,8 +5,8 @@ from project.payments.views import BalanceView, TransactionsViewSet
 
 router = DefaultRouter()
 
-router.register(r'transactions', TransactionsViewSet)
+router.register(r"transactions", TransactionsViewSet)
 
 urlpatterns = [
-    path('balance/', BalanceView.as_view(), name='balance'),
+    path("balance/", BalanceView.as_view(), name="balance"),
 ] + router.urls

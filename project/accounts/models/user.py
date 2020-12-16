@@ -6,8 +6,8 @@ from project.accounts.managers import UserManager
 
 
 class CustomUser(AbstractBaseUser, PermissionsMixin):
-    EMAIL_FIELD = 'email'
-    USERNAME_FIELD = 'email'
+    EMAIL_FIELD = "email"
+    USERNAME_FIELD = "email"
     objects = UserManager()
 
     first_name = models.CharField(max_length=150)
@@ -16,13 +16,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(
         db_index=True,
         default=False,
-        help_text='Designates whether the user can log into this admin site.'
+        help_text="Designates whether the user can log into this admin site.",
     )
     is_active = models.BooleanField(
         db_index=True,
         default=True,
-        help_text='Designates whether this user should be treated as active.'
-                  ' Unselect this instead of deleting accounts.'
+        help_text="Designates whether this user should be treated as active."
+        " Unselect this instead of deleting accounts.",
     )
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)

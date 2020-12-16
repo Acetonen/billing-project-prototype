@@ -8,7 +8,7 @@ UserModel = get_user_model()
 class CreateWalletInteractor:
     """Create user wallet."""
 
-    def set_params(self, user: UserModel) -> 'CreateWalletInteractor':
+    def set_params(self, user: UserModel) -> "CreateWalletInteractor":
         self.user = user
 
         return self

@@ -8,9 +8,9 @@ UserModel = get_user_model()
 class RegistrationUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserModel
-        fields = ('id', 'email', 'password', 'first_name', 'last_name')
+        fields = ("id", "email", "password", "first_name", "last_name")
         extra_kwargs = {
-            'password': {'write_only': True},
+            "password": {"write_only": True},
         }
 
     def validate_password(self, value):
@@ -25,4 +25,4 @@ class RegistrationUserSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserModel
-        fields = '__all__'
+        fields = "__all__"

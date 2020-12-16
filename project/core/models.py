@@ -9,10 +9,22 @@ class ParentModel(models.Model):
 
 
 class CreateUpdateParentModel(ParentModel):
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.CASCADE,
-                                   related_name='created_%(app_label)s_%(class)s_set', editable=False)
-    modified_by = models.ForeignKey(settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.CASCADE,
-                                    related_name='modified_%(app_label)s_%(class)s_set', editable=False)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name="created_%(app_label)s_%(class)s_set",
+        editable=False,
+    )
+    modified_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        related_name="modified_%(app_label)s_%(class)s_set",
+        editable=False,
+    )
 
     class Meta:
         abstract = True

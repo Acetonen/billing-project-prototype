@@ -21,7 +21,11 @@ class RegistrationView(generics.CreateAPIView):
         user = serializer.save()
         CreateWalletInteractor().set_params(user).execute()
 
-        return Response({
-            "user": UserSerializer(user, context=self.get_serializer_context()).data,
-            "message": "User Created Successfully.  Now perform Login to get your token",
-        })
+        return Response(
+            {
+                "user": UserSerializer(
+                    user, context=self.get_serializer_context()
+                ).data,
+                "message": "User Created Successfully.  Now perform Login to get your token",
+            }
+        )

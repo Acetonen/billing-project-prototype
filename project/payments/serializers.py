@@ -18,15 +18,17 @@ class TransactionCreateSerializer(ParentSerializer):
     user_email = serializers.EmailField(required=True)
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', False)
-        self.is_transfer = kwargs.pop('is_transfer', False)  # to check transfer validation.
+        self.request = kwargs.pop("request", False)
+        self.is_transfer = kwargs.pop(
+            "is_transfer", False
+        )  # to check transfer validation.
         super().__init__(*args, **kwargs)
 
     def validate_user_email(self, data):
         try:
             UserModel.objects.get(email=data)
         except ObjectDoesNotExist:
-            raise serializers.ValidationError('Receiver email does not exists.')
+            raise serializers.ValidationError("Receiver email does not exists.")
 
         return data
 
@@ -37,7 +39,7 @@ class TransactionCreateSerializer(ParentSerializer):
         return data
 
     def validate(self, attrs):
-        if self.is_transfer and attrs['user_email'] == self.request.user.email:
+        if self.is_transfer and attrs["user_email"] == self.request.user.email:
             raise serializers.ValidationError("You can't transfer objects to yourself.")
 
         return attrs
@@ -57,21 +59,22 @@ class InvoicePaySerializer(ParentSerializer):
     uuid = serializers.UUIDField(required=True)
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', False)
+        self.request = kwargs.pop("request", False)
         super().__init__(*args, **kwargs)
 
     def validate_uuid(self, data):
         try:
-            transaction = Transaction.objects.get(uuid=data,
-                                                  sender__user=self.request.user)
-            print('transaction', transaction)
+            transaction = Transaction.objects.get(
+                uuid=data, sender__user=self.request.user
+            )
+            print("transaction", transaction)
         except ObjectDoesNotExist:
-            print('ObjectDoesNotExist', ObjectDoesNotExist)
+            print("ObjectDoesNotExist", ObjectDoesNotExist)
             raise serializers.ValidationError("You don't have invoice with such id.")
 
         if transaction.is_done:
-            print('transaction.is_done', transaction.is_done)
+            print("transaction.is_done", transaction.is_done)
             raise serializers.ValidationError("Invoice already paid.")
 
-        print('data', data)
+        print("data", data)
         return data

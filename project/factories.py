@@ -8,18 +8,18 @@ from project.payments.models import Wallet
 
 
 class UserFactory(DjangoModelFactory):
-    first_name = 'BORIS'
-    email = Faker('email')
+    first_name = "BORIS"
+    email = Faker("email")
     is_staff = False
 
     class Meta:
         model = CustomUser
-        django_get_or_create = ['email']
+        django_get_or_create = ["email"]
 
 
 class WalletFactory(DjangoModelFactory):
     user = SubFactory(UserFactory)
-    balance = Decimal('666.00')
+    balance = Decimal("666.00")
 
     class Meta:
         model = Wallet

@@ -7,4 +7,3 @@ class ParentSerializer(serializers.Serializer):
 
     def update(self, instance, validated_data):
         pass
-
