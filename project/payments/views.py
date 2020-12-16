@@ -54,11 +54,11 @@ class TransactionsViewSet(mixins.RetrieveModelMixin,
         serializer.is_valid(raise_exception=True)
         receiver = UserModel.objects.get(email=serializer.validated_data['user_email'])
 
-        transaction = (CreateInvoiceInteractor()
-                       .set_params(request.user, receiver, serializer.validated_data['sum'], True)
-                       .execute())
+        transaction_obj = (CreateInvoiceInteractor()
+                           .set_params(request.user, receiver, serializer.validated_data['sum'], True)
+                           .execute())
 
-        return Response(TransactionSerializer(transaction).data)
+        return Response(TransactionSerializer(transaction_obj).data)
 
     @swagger_auto_schema(methods=['post'],
                          request_body=TransactionCreateSerializer,
@@ -125,13 +125,12 @@ class TransactionsViewSet(mixins.RetrieveModelMixin,
         serializer = InvoicePaySerializer(data=request.data,
                                           request=request)
         serializer.is_valid(raise_exception=True)
-        print(serializer.validated_data)
-        transaction = Transaction.objects.select_related('sender__user').get(uuid=serializer.validated_data['uuid'])
+        transaction_obj = Transaction.objects.select_related('sender__user').get(uuid=serializer.validated_data['uuid'])
         sender_wallet = (MakeTransferInteractor()
-                         .set_params(transaction.sender.user, transaction.receiver.user, transaction.sum)
+                         .set_params(transaction_obj.sender.user, transaction_obj.receiver.user, transaction_obj.sum)
                          .execute())
         (UpdateTransactionInteractor()
-         .set_params(transaction.uuid)
+         .set_params(transaction_obj.uuid)
          .execute())
 
         return Response(WalletSerializer(sender_wallet).data)
