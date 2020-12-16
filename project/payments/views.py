@@ -7,14 +7,6 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .use_cases import (
-    GetWalletInteractor,
-    CreateTransactionInteractor,
-    UpdateTransactionInteractor,
-    CreateInvoiceInteractor,
-    UpdateWalletBalanceInteractor,
-    MakeTransferInteractor,
-)
 from project.core.permissions import RelatedUserOnly, ReceiverOrSenderOnly
 from .models import Transaction
 from .pagination import TransactionsPagination
@@ -23,6 +15,14 @@ from .serializers import (
     TransactionSerializer,
     TransactionCreateSerializer,
     InvoicePaySerializer,
+)
+from .use_cases import (
+    GetWalletInteractor,
+    CreateTransactionInteractor,
+    UpdateTransactionInteractor,
+    CreateInvoiceInteractor,
+    UpdateWalletBalanceInteractor,
+    MakeTransferInteractor,
 )
 
 UserModel = get_user_model()
@@ -52,8 +52,8 @@ class TransactionsViewSet(
     @swagger_auto_schema(
         methods=["post"],
         request_body=TransactionCreateSerializer,
-        responses={200: TransactionSerializer},
-    )  # noqa
+        responses={200: TransactionSerializer},  # noqa
+    )
     @action(
         detail=False,
         methods=["post"],
@@ -77,8 +77,8 @@ class TransactionsViewSet(
     @swagger_auto_schema(
         methods=["post"],
         request_body=TransactionCreateSerializer,
-        responses={200: WalletSerializer},
-    )  # noqa
+        responses={200: WalletSerializer},  # noqa
+    )
     @action(
         detail=False,
         methods=["post"],
@@ -112,7 +112,7 @@ class TransactionsViewSet(
     @swagger_auto_schema(
         methods=["post"],
         request_body=TransactionCreateSerializer,
-        responses={200: WalletSerializer},
+        responses={200: WalletSerializer},  # noqa
     )  # noqa
     @action(
         detail=False,
@@ -147,8 +147,8 @@ class TransactionsViewSet(
     @swagger_auto_schema(
         methods=["post"],
         request_body=InvoicePaySerializer,
-        responses={200: WalletSerializer},
-    )  # noqa
+        responses={200: WalletSerializer},  # noqa
+    )
     @action(
         detail=False,
         methods=["post"],
