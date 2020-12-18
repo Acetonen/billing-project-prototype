@@ -1,40 +1,117 @@
 version: '3.7'
 
+x-default:
+  &default
+  build: .
+
+  volumes:
+    - billing-static:/code/project/staticfiles
+    - billing-media:/code/project/media
+    - billing-conf:/code/project/conf
+  depends_on:
+    - db
+    - redis
+    - rabbit
+  logging:
+    options:
+      max-size: "10m"
+      max-file: "5"
+  networks:
+    - billing
+  restart: unless-stopped
+
+
+volumes:
+  billing-conf:
+    name: billing-conf
+  billing-media:
+    name: billing-media
+  billing-static:
+    name: billing-static
+  billing-postgres-depo:
+    name: billing-postgres-depo
+  billing-redis-depo:
+    name: billing-redis-depo
+  billing-rabbit-depo:
+    name: billing-rabbit-depo
+
+networks:
+  billing:
+    name: billing
+    driver: bridge
+
 services:
   db:
-    image: postgres:11
-    env_file: docker/development/docker.env
-
-    ports:
-      - 55432:5432
-
+    container_name: billing_db
+    restart: unless-stopped
+    image: postgres:12
+    environment:
+      - POSTGRES_USER=billing
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=billing
     volumes:
-      - ../docker/volumes/db:/var/lib/postgresql/data
+      - billing-postgres-depo:/var/lib/postgresql/data
+    networks:
+      - billing
 
-  cache:
-    image: memcached
+  redis:
+    container_name: billing_redis
+    restart: unless-stopped
+    image: redis:latest
+    volumes:
+      - billing-redis-depo:/data
+    networks:
+      - billing
 
-    ports:
-      - 11211:1211
+  rabbit:
+    container_name: billing_rabbit
+    restart: unless-stopped
+    image: rabbitmq:management
+    volumes:
+      - billing-rabbit-depo:/var/lib/rabbitmq
+    networks:
+      - billing
 
   web:
-    build:
-      context: .
-      dockerfile: docker/development/Dockerfile
+    << : *default
+    container_name: billing_web
+    command: bash -c "
+      python3 manage.py migrate
+      && gunicorn project.wsgi:application
+        -b 0.0.0.0:8000
+        --reload
+        --worker-connections=1000
+        --workers=5
+        --threads=3
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://0.0.0.0:8000/api/utils/health/"]
+      interval: 10s
+      timeout: 30s
+      retries: 20
 
-    env_file: docker/development/prod.env
-    command: sh -c "/wait && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+#  celery_worker:
+#    << : *default
+#    container_name: billing_celery_worker
+#    command: celery -A project worker -B -l INFO
 
-    ports:
-      - "9000:8000"
-      - "6900:6900"
+#  celery_flower:
+#    << : *default
+#    container_name: billing_flower
+#    command: flower -A project.celery --conf=project/flowerconfig.py
+#    ports:
+#      - "5555:5555"
 
+  nginx:
+    restart: unless-stopped
+    image: nginx:latest
     volumes:
-      - .:/code/
-
-    links:
-      - db
-      - cache
-
-    environment:
-      WAIT_HOSTS: db:5432
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - billing-media:/media
+      - billing-static:/static
+    ports:
+      - "80:80"
+    networks:
+      - billing
+    depends_on:
+      - web
