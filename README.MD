@@ -1,5 +1,7 @@
 # The Billing project prototype.
 
+*The purpose of this project is to experiment with Service Layer architecture and Repository pattern in Django.*
+
 **Requirements:**
 ```
 1) Each client in the system has one "wallet" containing money.
@@ -43,7 +45,7 @@ docker-compose up
 ```
 When the project will starts. You can go to the swagger page 
 (this is also the main page in the project for easy debug in the current prototype project state) 
-here: http://127.0.0.1:9000
+here: [localhost](http://localhost)
 Then you can register user with swagger:
 ![](docs/registration.png)
 For test purposes user creates with is_staff permissions, so you can login with django admin and has access to all api 

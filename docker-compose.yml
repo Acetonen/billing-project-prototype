@@ -53,6 +53,8 @@ services:
       - billing-postgres-depo:/var/lib/postgresql/data
     networks:
       - billing
+    ports:
+      - "55432:5432"
 
   redis:
     container_name: billing_redis
@@ -75,6 +77,9 @@ services:
   web:
     << : *default
     container_name: billing_web
+    environment:
+      - DOCKER=1
+      - DJANGO_SETTINGS_MODULE=project.settings
     command: bash -c "
       python3 manage.py migrate
       && gunicorn project.wsgi:application
