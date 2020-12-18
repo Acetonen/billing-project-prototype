@@ -8,37 +8,34 @@ from django.db.models import F
 from django.utils import timezone
 from rest_framework.exceptions import ValidationError
 
-from project.accounts.use_cases import UserModel
+from project.core.abstract_data_types import AbstractUseCase
 from project.payments.models import Wallet, Transaction
 
 
-class GetWalletInteractor:
+class GetWalletInteractor(AbstractUseCase):
     """Get user wallet to view balance."""
 
-    def set_params(self, user: UserModel) -> "GetWalletInteractor":
+    def set_params(self, user):
         self.user = user
 
-        return self
+    def execute(self):
+        self.result_of_execution = Wallet.objects.get(user=self.user)
 
-    def execute(self) -> Wallet:
-        return Wallet.objects.get(user=self.user)
+    def get_execution_result(self) -> Wallet:
+        return super().get_execution_result()
 
 
-class CreateTransactionInteractor:
+class CreateTransactionInteractor(AbstractUseCase):
     """Create new transfer, invoice ot transaction."""
 
-    def set_params(
-        self, sender: UserModel, receiver: UserModel, sum_: Decimal, invoice: bool
-    ) -> "CreateTransactionInteractor":
+    def set_params(self, sender, receiver, sum_: Decimal, invoice: bool):
         self.sender = sender
         self.receiver = receiver
         self.sum = sum_
         self.invoice = invoice
 
-        return self
-
-    def execute(self) -> Transaction:
-        return Transaction.objects.create(
+    def execute(self):
+        self.result_of_execution = Transaction.objects.create(
             sender=self.sender.wallet,
             receiver=self.receiver.wallet,
             sum=self.sum,
@@ -47,68 +44,65 @@ class CreateTransactionInteractor:
             is_done=False if self.invoice else True,
         )  # as it invoice, not payment
 
+    def get_execution_result(self) -> Transaction:
+        return super().get_execution_result()
 
-class UpdateTransactionInteractor:
+
+class UpdateTransactionInteractor(AbstractUseCase):
     """Update invoice transaction."""
 
-    def set_params(self, transaction_uuid: uuid) -> "UpdateTransactionInteractor":
+    def set_params(self, transaction_uuid: uuid.uuid4):
         self.transaction_uuid = transaction_uuid
 
-        return self
-
-    def execute(self) -> Transaction:
+    def execute(self):
         invoice = Transaction.objects.get(uuid=self.transaction_uuid)
         invoice.is_done = True
         invoice.done_time = timezone.now()
         invoice.save(update_fields=["is_done", "done_time"])
 
-        return invoice
+        self.result_of_execution = invoice
+
+    def get_execution_result(self) -> Transaction:
+        return super().get_execution_result()
 
 
 class CreateInvoiceInteractor(CreateTransactionInteractor):
-    def set_params(self, *args, **kwargs) -> "CreateInvoiceInteractor":
+    def set_params(self, *args, **kwargs):
         super().set_params(*args, **kwargs)
         #  We should switch sender and receiver when make deal with invoice:
         if self.invoice:
             self.sender, self.receiver = self.receiver, self.sender
 
-        return self
 
-
-class UpdateWalletBalanceInteractor:
+class UpdateWalletBalanceInteractor(AbstractUseCase):
     """Update wallet balance."""
 
-    def set_params(
-        self, receiver_wallet: Wallet, sum_: Decimal
-    ) -> "UpdateWalletBalanceInteractor":
+    def set_params(self, receiver_wallet: Wallet, sum_: Decimal):
         self.receiver_wallet = receiver_wallet
         self.sum = sum_
 
-        return self
-
-    def execute(self) -> Wallet:
+    def execute(self):
         self.receiver_wallet.balance = (
             F("balance") + self.sum
         )  # to prevent race conditions
         self.receiver_wallet.save(update_fields=["balance"])
         self.receiver_wallet.refresh_from_db()
 
-        return self.receiver_wallet
+        self.result_of_execution = self.receiver_wallet
+
+    def get_execution_result(self) -> Wallet:
+        return super().get_execution_result()
 
 
-class MakeTransferInteractor:
+class MakeTransferInteractor(AbstractUseCase):
     """Write off sum from one user and add to another"""
 
-    def set_params(
-        self, sender: UserModel, receiver: UserModel, sum_: Decimal
-    ) -> "MakeTransferInteractor":
+    def set_params(self, sender, receiver, sum_: Decimal):
         self.sender = sender
         self.receiver = receiver
         self.sum = sum_
 
-        return self
-
-    def execute(self) -> Wallet:
+    def execute(self):
         """
         Use transaction.atomic and select_for_update to lock rows and prevent race conditions.
         Is need to select_for_update only sender wallet to prevent go to 'under zero', receiver will be enough
@@ -127,15 +121,16 @@ class MakeTransferInteractor:
             if settings.MAKE_TEST_LAG_IN_TRANSFER:
                 time.sleep(2)
 
-            sender_wallet = (
-                UpdateWalletBalanceInteractor()
-                .set_params(sender_wallet, -self.sum)
-                .execute()
-            )
-            receiver_wallet = (
-                UpdateWalletBalanceInteractor()
-                .set_params(receiver_wallet, self.sum)
-                .execute()
-            )
+            update_interactor = UpdateWalletBalanceInteractor()
+            update_interactor.set_params(sender_wallet, -self.sum)
+            update_interactor.execute()
+            sender_wallet = update_interactor.get_execution_result()
 
-        return sender_wallet
+            update_interactor = UpdateWalletBalanceInteractor()
+            update_interactor.set_params(receiver_wallet, self.sum)
+            update_interactor.execute()
+
+        self.result_of_execution = sender_wallet
+
+    def get_execution_result(self) -> Wallet:
+        return super().get_execution_result()

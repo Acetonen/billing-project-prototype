@@ -1,14 +1,10 @@
-from django.contrib.auth import get_user_model
-
 from project.payments.models import Wallet
-
-UserModel = get_user_model()
 
 
 class CreateWalletInteractor:
     """Create user wallet."""
 
-    def set_params(self, user: UserModel) -> "CreateWalletInteractor":
+    def set_params(self, user) -> "CreateWalletInteractor":
         self.user = user
 
         return self

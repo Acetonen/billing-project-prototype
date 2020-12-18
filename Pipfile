@@ -5,6 +5,9 @@ verify_ssl = true
 
 [dev-packages]
 black = "==20.8b1"
+mypy = "*"
+django-stubs = "*"
+djangorestframework-stubs = "*"
 
 [packages]
 django-extensions = "*"
@@ -24,7 +27,6 @@ pytest-asyncio = "*"
 aiohttp = "*"
 requests = "*"
 typing-extensions = "*"
-
 ipython = "*"
 pytest-sugar = "*"
 pytest-django = "*"

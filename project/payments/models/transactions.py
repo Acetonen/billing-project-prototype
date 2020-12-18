@@ -6,13 +6,13 @@ from project.core.models import TimeStampParentModel
 class Transaction(TimeStampParentModel):
     uuid = models.UUIDField(db_index=True)
     sender = models.ForeignKey(
-        "payments.Wallet",
+        "payments.Wallet",  # noqa
         on_delete=models.CASCADE,
         related_name="requested_transactions",
         null=True,
     )
     receiver = models.ForeignKey(
-        "payments.Wallet",
+        "payments.Wallet",  # noqa
         on_delete=models.CASCADE,
         related_name="received_transactions",
     )
