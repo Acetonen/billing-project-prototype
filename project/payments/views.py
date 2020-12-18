@@ -34,8 +34,12 @@ class BalanceView(APIView):
 
     @swagger_auto_schema(responses={200: WalletSerializer})  # noqa
     def get(self, request):
-        wallet = GetWalletInteractor().set_params(request.user).execute()
+        wallet_interactor = GetWalletInteractor()
+        wallet_interactor.set_params(request.user)
+        wallet_interactor.execute()
+        wallet = wallet_interactor.get_execution_result()
         serializer = WalletSerializer(wallet)
+
         return Response(serializer.data)
 
 
@@ -60,17 +64,18 @@ class TransactionsViewSet(
         name="Create invoice to another user",
         url_path="create-invoice",
         permission_classes=[permissions.IsAuthenticated],
-    )
+    )  # noqa
     def create_invoice(self, request):
         serializer = TransactionCreateSerializer(data=request.data, request=request)
         serializer.is_valid(raise_exception=True)
         receiver = UserModel.objects.get(email=serializer.validated_data["user_email"])
 
-        transaction_obj = (
-            CreateInvoiceInteractor()
-            .set_params(request.user, receiver, serializer.validated_data["sum"], True)
-            .execute()
+        invoice_interactor = CreateInvoiceInteractor()
+        invoice_interactor.set_params(
+            request.user, receiver, serializer.validated_data["sum"], True
         )
+        invoice_interactor.execute()
+        transaction_obj = invoice_interactor.get_execution_result()
 
         return Response(TransactionSerializer(transaction_obj).data)
 
@@ -85,22 +90,25 @@ class TransactionsViewSet(
         name="Make a deposits",
         url_path="make-deposits",
         permission_classes=[permissions.IsAuthenticated],
-    )
+    )  # noqa
     def make_deposits(self, request):
         serializer = TransactionCreateSerializer(data=request.data, request=request)
         serializer.is_valid(raise_exception=True)
         receiver = UserModel.objects.get(email=serializer.validated_data["user_email"])
 
-        wallet = (
-            UpdateWalletBalanceInteractor()
-            .set_params(receiver.wallet, serializer.validated_data["sum"])
-            .execute()
-        )
-        (
-            CreateTransactionInteractor()
-            .set_params(request.user, receiver, serializer.validated_data["sum"], False)
-            .execute()
-        )
+        with transaction.atomic():
+            update_interactor = UpdateWalletBalanceInteractor()
+            update_interactor.set_params(
+                receiver.wallet, serializer.validated_data["sum"]
+            )
+            update_interactor.execute()
+            wallet = update_interactor.get_execution_result()
+
+            transaction_interactor = CreateTransactionInteractor()
+            transaction_interactor.set_params(
+                request.user, receiver, serializer.validated_data["sum"], False
+            )
+            transaction_interactor.execute()
 
         if request.user == receiver:
             # Return wallet balance if user make deposits for himself:
@@ -113,14 +121,14 @@ class TransactionsViewSet(
         methods=["post"],
         request_body=TransactionCreateSerializer,
         responses={200: WalletSerializer},  # noqa
-    )  # noqa
+    )
     @action(
         detail=False,
         methods=["post"],
         name="Transfer to another user",
         url_path="make-transfer",
         permission_classes=[permissions.IsAuthenticated],
-    )
+    )  # noqa
     def transfer_to_another_user(self, request):
         serializer = TransactionCreateSerializer(
             data=request.data, is_transfer=True, request=request
@@ -129,18 +137,18 @@ class TransactionsViewSet(
         receiver = UserModel.objects.get(email=serializer.validated_data["user_email"])
 
         with transaction.atomic():
-            sender_wallet = (
-                MakeTransferInteractor()
-                .set_params(request.user, receiver, serializer.validated_data["sum"])
-                .execute()
+            transfer_interactor = MakeTransferInteractor()
+            transfer_interactor.set_params(
+                request.user, receiver, serializer.validated_data["sum"]
             )
-            (
-                CreateTransactionInteractor()
-                .set_params(
-                    request.user, receiver, serializer.validated_data["sum"], False
-                )
-                .execute()
+            transfer_interactor.execute()
+            sender_wallet = transfer_interactor.get_execution_result()
+
+            transaction_interactor = CreateTransactionInteractor()
+            transaction_interactor.set_params(
+                request.user, receiver, serializer.validated_data["sum"], False
             )
+            transaction_interactor.execute()
 
         return Response(WalletSerializer(sender_wallet).data)
 
@@ -155,22 +163,26 @@ class TransactionsViewSet(
         name="Pay for invoice",
         url_path="pay-invoice",
         permission_classes=[permissions.IsAuthenticated],
-    )
+    )  # noqa
     def pay_invoice(self, request):
         serializer = InvoicePaySerializer(data=request.data, request=request)
         serializer.is_valid(raise_exception=True)
         transaction_obj = Transaction.objects.select_related("sender__user").get(
             uuid=serializer.validated_data["uuid"]
         )
-        sender_wallet = (
-            MakeTransferInteractor()
-            .set_params(
+
+        with transaction.atomic():
+            transfer_interactor = MakeTransferInteractor()
+            transfer_interactor.set_params(
                 transaction_obj.sender.user,
                 transaction_obj.receiver.user,
                 transaction_obj.sum,
             )
-            .execute()
-        )
-        (UpdateTransactionInteractor().set_params(transaction_obj.uuid).execute())
+            transfer_interactor.execute()
+            sender_wallet = transfer_interactor.get_execution_result()
+
+            update_interactor = UpdateTransactionInteractor()
+            update_interactor.set_params(transaction_obj.uuid)
+            update_interactor.execute()
 
         return Response(WalletSerializer(sender_wallet).data)
