@@ -1,13 +1,17 @@
-from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 
-UserModel = get_user_model()
+from project.core.serializers import ParentSerializer
 
 
-class RegistrationUserSerializer(serializers.ModelSerializer):
+class RegistrationUserSerializer(ParentSerializer):
+    id = serializers.IntegerField(read_only=True)
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(required=True)
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)
+
     class Meta:
-        model = UserModel
         fields = ("id", "email", "password", "first_name", "last_name")
         extra_kwargs = {
             "password": {"write_only": True},
@@ -17,12 +21,8 @@ class RegistrationUserSerializer(serializers.ModelSerializer):
         validate_password(value)
         return value
 
-    def create(self, validated_data):
-        user = UserModel.objects.create_user(is_staff=True, **validated_data)
-        return user
 
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserModel
-        fields = "__all__"
+class UserSerializer(ParentSerializer):
+    email = serializers.EmailField(required=True)
+    first_name = serializers.CharField(required=True)
+    last_name = serializers.CharField(required=True)

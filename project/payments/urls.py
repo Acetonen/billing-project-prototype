@@ -1,12 +1,15 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
-from project.payments.views import BalanceView, TransactionsViewSet
+from project.payments.views_wrappers import (
+    BalanceViewWrapper,
+    TransactionsViewSetWrapper,
+)
 
 router = DefaultRouter()
 
-router.register(r"transactions", TransactionsViewSet)
+router.register(r"transactions", TransactionsViewSetWrapper)
 
 urlpatterns = [
-    path("balance/", BalanceView.as_view(), name="balance"),
+    path("balance/", BalanceViewWrapper.as_view(), name="balance"),
 ] + router.urls

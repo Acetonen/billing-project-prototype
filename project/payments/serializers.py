@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from project.core.serializers import ParentSerializer
 from project.payments.models import Transaction
+from project.payments.repositories import TransactionRepo
 
 UserModel = get_user_model()
 
@@ -18,7 +19,7 @@ class TransactionCreateSerializer(ParentSerializer):
     user_email = serializers.EmailField(required=True)
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop("request", False)
+        self.request_user_email = kwargs.pop("request_user_email", False)
         self.is_transfer = kwargs.pop(
             "is_transfer", False
         )  # to check transfer validation.
@@ -39,7 +40,8 @@ class TransactionCreateSerializer(ParentSerializer):
         return data
 
     def validate(self, attrs):
-        if self.is_transfer and attrs["user_email"] == self.request.user.email:
+        print(attrs["user_email"], self.request_user_email)
+        if self.is_transfer and attrs["user_email"] == self.request_user_email:
             raise serializers.ValidationError("You can't transfer objects to yourself.")
 
         return attrs
@@ -47,8 +49,8 @@ class TransactionCreateSerializer(ParentSerializer):
 
 class TransactionSerializer(ParentSerializer):
     id = serializers.IntegerField(read_only=True)
-    sender = serializers.PrimaryKeyRelatedField(read_only=True)
-    receiver = serializers.PrimaryKeyRelatedField(read_only=True)
+    sender = serializers.IntegerField(read_only=True)
+    receiver = serializers.IntegerField(read_only=True)
     sum = serializers.DecimalField(max_digits=9, decimal_places=2, read_only=True)
     done_time = serializers.DateTimeField(read_only=True, allow_null=True)
     is_done = serializers.BooleanField(read_only=True)
@@ -59,22 +61,18 @@ class InvoicePaySerializer(ParentSerializer):
     uuid = serializers.UUIDField(required=True)
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop("request", False)
+        self.sender_wallet_id = kwargs.pop("sender_wallet_id", False)
         super().__init__(*args, **kwargs)
 
     def validate_uuid(self, data):
         try:
-            transaction = Transaction.objects.get(
-                uuid=data, sender__user=self.request.user
+            transaction = TransactionRepo.get(
+                uuid=data, sender_id=self.sender_wallet_id
             )
-            print("transaction", transaction)
         except ObjectDoesNotExist:
-            print("ObjectDoesNotExist", ObjectDoesNotExist)
             raise serializers.ValidationError("You don't have invoice with such id.")
 
         if transaction.is_done:
-            print("transaction.is_done", transaction.is_done)
             raise serializers.ValidationError("Invoice already paid.")
 
-        print("data", data)
         return data

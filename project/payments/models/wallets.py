@@ -15,7 +15,9 @@ class Wallet(TimeStampParentModel):
 
     class Meta:
         constraints = [
-            models.CheckConstraint(check=models.Q(balance__gte=0), name='balance_gte_0'),
+            models.CheckConstraint(
+                check=models.Q(balance__gte=0), name="balance_gte_0"
+            ),
         ]
 
     def __str__(self):
