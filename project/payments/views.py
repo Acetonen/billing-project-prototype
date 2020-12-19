@@ -1,4 +1,5 @@
-from typing import Dict, Tuple
+from collections import namedtuple
+from typing import Dict
 
 from rest_framework.response import Response
 
@@ -19,9 +20,12 @@ from .use_cases import (
     UpdateWalletBalanceInteractor,
     MakeTransferInteractor,
 )
-from ..accounts.data import UserData
 from ..accounts.repositories import UserRepo
 from ..accounts.use_cases import get_user_with_wallet
+
+TransactionCleanedData = namedtuple(
+    "TransactionCleanedData", "sender receiver validated_data"
+)
 
 
 class BalanceView:
@@ -35,7 +39,7 @@ class BalanceView:
 class TransactionsView:
     def _get_sender_and_receiver_for_transaction(
         self, request_data: Dict, request_user_id: int, is_transfer: bool = False
-    ) -> Tuple[UserData, UserData, Dict]:
+    ) -> TransactionCleanedData:
         sender = get_user_with_wallet(repo=UserRepo, id=request_user_id)
         serializer = TransactionCreateSerializer(
             data=request_data, request_user_email=sender.email, is_transfer=is_transfer
@@ -45,18 +49,19 @@ class TransactionsView:
             repo=UserRepo, email=serializer.validated_data["user_email"]
         )
 
-        return sender, receiver, serializer.validated_data
+        return TransactionCleanedData(sender, receiver, serializer.validated_data)
 
     def create_invoice(self, request_data: Dict, request_user_id: int) -> Response:
-        (
-            sender,
-            receiver,
-            validated_data,
-        ) = self._get_sender_and_receiver_for_transaction(request_data, request_user_id)
+        cleaned_data = self._get_sender_and_receiver_for_transaction(
+            request_data, request_user_id
+        )
 
         invoice_interactor = CreateInvoiceInteractor(repo=TransactionRepo)
         invoice_interactor.set_params(
-            sender.wallet, receiver.wallet, validated_data["sum"], True
+            cleaned_data.sender.wallet,
+            cleaned_data.receiver.wallet,
+            cleaned_data.validated_data["sum"],
+            True,
         )
         invoice_interactor.execute()
         transaction_obj = invoice_interactor.get_execution_result()
@@ -64,24 +69,27 @@ class TransactionsView:
         return Response(TransactionSerializer(transaction_obj).data)
 
     def make_deposits(self, request_data: Dict, request_user_id: int) -> Response:
-        (
-            sender,
-            receiver,
-            validated_data,
-        ) = self._get_sender_and_receiver_for_transaction(request_data, request_user_id)
+        cleaned_data = self._get_sender_and_receiver_for_transaction(
+            request_data, request_user_id
+        )
 
         update_interactor = UpdateWalletBalanceInteractor(repo=WalletRepo)
-        update_interactor.set_params(receiver.wallet, validated_data["sum"])
+        update_interactor.set_params(
+            cleaned_data.receiver.wallet, cleaned_data.validated_data["sum"]
+        )
         update_interactor.execute()
         wallet = update_interactor.get_execution_result()
 
         transaction_interactor = CreateTransactionInteractor(repo=TransactionRepo)
         transaction_interactor.set_params(
-            sender.wallet, receiver.wallet, validated_data["sum"], False
+            cleaned_data.sender.wallet,
+            cleaned_data.receiver.wallet,
+            cleaned_data.validated_data["sum"],
+            False,
         )
         transaction_interactor.execute()
 
-        if sender == receiver:
+        if cleaned_data.sender == cleaned_data.receiver:
             # Return wallet balance if user make deposits for himself:
             return Response(WalletSerializer(wallet).data)
         else:
@@ -91,24 +99,25 @@ class TransactionsView:
     def transfer_to_another_user(
         self, request_data: Dict, request_user_id: int
     ) -> Response:
-        (
-            sender,
-            receiver,
-            validated_data,
-        ) = self._get_sender_and_receiver_for_transaction(
+        cleaned_data = self._get_sender_and_receiver_for_transaction(
             request_data, request_user_id, is_transfer=True
         )
 
         transfer_interactor = MakeTransferInteractor(repo=WalletRepo)
         transfer_interactor.set_params(
-            sender.wallet.id, receiver.wallet.id, validated_data["sum"]
+            cleaned_data.sender.wallet.id,
+            cleaned_data.receiver.wallet.id,
+            cleaned_data.validated_data["sum"],
         )
         transfer_interactor.execute()
         sender_wallet = transfer_interactor.get_execution_result()
 
         transaction_interactor = CreateTransactionInteractor(repo=TransactionRepo)
         transaction_interactor.set_params(
-            sender.wallet, receiver.wallet, validated_data["sum"], False
+            cleaned_data.sender.wallet,
+            cleaned_data.receiver.wallet,
+            cleaned_data.validated_data["sum"],
+            False,
         )
         transaction_interactor.execute()
 

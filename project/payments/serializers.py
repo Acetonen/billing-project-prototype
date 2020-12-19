@@ -40,7 +40,6 @@ class TransactionCreateSerializer(ParentSerializer):
         return data
 
     def validate(self, attrs):
-        print(attrs["user_email"], self.request_user_email)
         if self.is_transfer and attrs["user_email"] == self.request_user_email:
             raise serializers.ValidationError("You can't transfer objects to yourself.")
 
