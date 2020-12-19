@@ -1,6 +1,7 @@
 # The Billing project prototype.
 
-*The purpose of this project is to experiment with Service Layer architecture and Repository pattern in Django.*
+*The purpose of this project is to experiment with Service Layer architecture and Repository pattern in Django. And 
+find the ways to easily migrate all project logic to another ORM web framework if we need.*
 
 **Requirements:**
 ```
@@ -15,16 +16,15 @@
     3) transfer of funds from one purse to another.
 ```
 
+## Project Structure
+
+- You can look at all ATD specifications of the project here `project/core/abstract_data_types.py`
+- All use cases (businesses logic) you can find in `project/[app_name]/use_cases.py`
+- ORM Repository realisation `project/core/repos.py`
+
 ## Database Schema.
 
-There was a decision between two schema types:
-1. Transaction and invoice as separate tables:
-![](docs/first_base_prototype.jpeg)
-2. Transaction and invoice as one table with "is_done" flag:
 ![](docs/final_base_schema.png)
-
-The choice was made in favor of the second option because the transaction and invoice entities are very similar and 
-have almost the same set of fields, from one table will be more convenient and faster to receive all user operations.
 
 ## Project Architecture.
 

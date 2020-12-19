@@ -1,15 +1,11 @@
-from django.contrib.auth import get_user_model
-from django.db import transaction
-from django_filters.rest_framework import DjangoFilterBackend
-from drf_yasg.utils import swagger_auto_schema
-from rest_framework import mixins, viewsets, permissions
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.views import APIView
+from typing import Dict, Tuple
 
-from project.core.permissions import RelatedUserOnly, ReceiverOrSenderOnly
-from .models import Transaction
-from .pagination import TransactionsPagination
+from rest_framework.response import Response
+
+from .repositories import (
+    WalletRepo,
+    TransactionRepo,
+)
 from .serializers import (
     WalletSerializer,
     TransactionSerializer,
@@ -17,172 +13,126 @@ from .serializers import (
     InvoicePaySerializer,
 )
 from .use_cases import (
-    GetWalletInteractor,
     CreateTransactionInteractor,
     UpdateTransactionInteractor,
     CreateInvoiceInteractor,
     UpdateWalletBalanceInteractor,
     MakeTransferInteractor,
 )
+from ..accounts.data import UserData
+from ..accounts.repositories import UserRepo
+from ..accounts.use_cases import get_user_with_wallet
 
-UserModel = get_user_model()
 
-
-class BalanceView(APIView):
-    permission_classes = (RelatedUserOnly,)
-    serializer_class = WalletSerializer
-
-    @swagger_auto_schema(responses={200: WalletSerializer})  # noqa
-    def get(self, request):
-        wallet_interactor = GetWalletInteractor()
-        wallet_interactor.set_params(request.user)
-        wallet_interactor.execute()
-        wallet = wallet_interactor.get_execution_result()
+class BalanceView:
+    def get(self, request_user_id: int):
+        wallet = WalletRepo.get(user_id=request_user_id)
         serializer = WalletSerializer(wallet)
 
         return Response(serializer.data)
 
 
-class TransactionsViewSet(
-    mixins.RetrieveModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet
-):
-    permission_classes = (ReceiverOrSenderOnly,)
-    pagination_class = TransactionsPagination
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ["is_done"]
-    queryset = Transaction.objects.all()
-    serializer_class = TransactionSerializer
-
-    @swagger_auto_schema(
-        methods=["post"],
-        request_body=TransactionCreateSerializer,
-        responses={200: TransactionSerializer},  # noqa
-    )
-    @action(
-        detail=False,
-        methods=["post"],
-        name="Create invoice to another user",
-        url_path="create-invoice",
-        permission_classes=[permissions.IsAuthenticated],
-    )  # noqa
-    def create_invoice(self, request):
-        serializer = TransactionCreateSerializer(data=request.data, request=request)
+class TransactionsView:
+    def _get_sender_and_receiver_for_transaction(
+        self, request_data: Dict, request_user_id: int, is_transfer: bool = False
+    ) -> Tuple[UserData, UserData, Dict]:
+        sender = get_user_with_wallet(repo=UserRepo, id=request_user_id)
+        serializer = TransactionCreateSerializer(
+            data=request_data, request_user_email=sender.email, is_transfer=is_transfer
+        )
         serializer.is_valid(raise_exception=True)
-        receiver = UserModel.objects.get(email=serializer.validated_data["user_email"])
+        receiver = get_user_with_wallet(
+            repo=UserRepo, email=serializer.validated_data["user_email"]
+        )
 
-        invoice_interactor = CreateInvoiceInteractor()
+        return sender, receiver, serializer.validated_data
+
+    def create_invoice(self, request_data: Dict, request_user_id: int) -> Response:
+        (
+            sender,
+            receiver,
+            validated_data,
+        ) = self._get_sender_and_receiver_for_transaction(request_data, request_user_id)
+
+        invoice_interactor = CreateInvoiceInteractor(repo=TransactionRepo)
         invoice_interactor.set_params(
-            request.user, receiver, serializer.validated_data["sum"], True
+            sender.wallet, receiver.wallet, validated_data["sum"], True
         )
         invoice_interactor.execute()
         transaction_obj = invoice_interactor.get_execution_result()
 
         return Response(TransactionSerializer(transaction_obj).data)
 
-    @swagger_auto_schema(
-        methods=["post"],
-        request_body=TransactionCreateSerializer,
-        responses={200: WalletSerializer},  # noqa
-    )
-    @action(
-        detail=False,
-        methods=["post"],
-        name="Make a deposits",
-        url_path="make-deposits",
-        permission_classes=[permissions.IsAuthenticated],
-    )  # noqa
-    def make_deposits(self, request):
-        serializer = TransactionCreateSerializer(data=request.data, request=request)
-        serializer.is_valid(raise_exception=True)
-        receiver = UserModel.objects.get(email=serializer.validated_data["user_email"])
+    def make_deposits(self, request_data: Dict, request_user_id: int) -> Response:
+        (
+            sender,
+            receiver,
+            validated_data,
+        ) = self._get_sender_and_receiver_for_transaction(request_data, request_user_id)
 
-        with transaction.atomic():
-            update_interactor = UpdateWalletBalanceInteractor()
-            update_interactor.set_params(
-                receiver.wallet, serializer.validated_data["sum"]
-            )
-            update_interactor.execute()
-            wallet = update_interactor.get_execution_result()
+        update_interactor = UpdateWalletBalanceInteractor(repo=WalletRepo)
+        update_interactor.set_params(receiver.wallet, validated_data["sum"])
+        update_interactor.execute()
+        wallet = update_interactor.get_execution_result()
 
-            transaction_interactor = CreateTransactionInteractor()
-            transaction_interactor.set_params(
-                request.user, receiver, serializer.validated_data["sum"], False
-            )
-            transaction_interactor.execute()
+        transaction_interactor = CreateTransactionInteractor(repo=TransactionRepo)
+        transaction_interactor.set_params(
+            sender.wallet, receiver.wallet, validated_data["sum"], False
+        )
+        transaction_interactor.execute()
 
-        if request.user == receiver:
+        if sender == receiver:
             # Return wallet balance if user make deposits for himself:
             return Response(WalletSerializer(wallet).data)
         else:
             # Return confirmation if user make deposits for another user:
             return Response({"details": "success"})
 
-    @swagger_auto_schema(
-        methods=["post"],
-        request_body=TransactionCreateSerializer,
-        responses={200: WalletSerializer},  # noqa
-    )
-    @action(
-        detail=False,
-        methods=["post"],
-        name="Transfer to another user",
-        url_path="make-transfer",
-        permission_classes=[permissions.IsAuthenticated],
-    )  # noqa
-    def transfer_to_another_user(self, request):
-        serializer = TransactionCreateSerializer(
-            data=request.data, is_transfer=True, request=request
+    def transfer_to_another_user(
+        self, request_data: Dict, request_user_id: int
+    ) -> Response:
+        (
+            sender,
+            receiver,
+            validated_data,
+        ) = self._get_sender_and_receiver_for_transaction(
+            request_data, request_user_id, is_transfer=True
         )
-        serializer.is_valid(raise_exception=True)
-        receiver = UserModel.objects.get(email=serializer.validated_data["user_email"])
 
-        with transaction.atomic():
-            transfer_interactor = MakeTransferInteractor()
-            transfer_interactor.set_params(
-                request.user, receiver, serializer.validated_data["sum"]
-            )
-            transfer_interactor.execute()
-            sender_wallet = transfer_interactor.get_execution_result()
+        transfer_interactor = MakeTransferInteractor(repo=WalletRepo)
+        transfer_interactor.set_params(
+            sender.wallet.id, receiver.wallet.id, validated_data["sum"]
+        )
+        transfer_interactor.execute()
+        sender_wallet = transfer_interactor.get_execution_result()
 
-            transaction_interactor = CreateTransactionInteractor()
-            transaction_interactor.set_params(
-                request.user, receiver, serializer.validated_data["sum"], False
-            )
-            transaction_interactor.execute()
+        transaction_interactor = CreateTransactionInteractor(repo=TransactionRepo)
+        transaction_interactor.set_params(
+            sender.wallet, receiver.wallet, validated_data["sum"], False
+        )
+        transaction_interactor.execute()
 
         return Response(WalletSerializer(sender_wallet).data)
 
-    @swagger_auto_schema(
-        methods=["post"],
-        request_body=InvoicePaySerializer,
-        responses={200: WalletSerializer},  # noqa
-    )
-    @action(
-        detail=False,
-        methods=["post"],
-        name="Pay for invoice",
-        url_path="pay-invoice",
-        permission_classes=[permissions.IsAuthenticated],
-    )  # noqa
-    def pay_invoice(self, request):
-        serializer = InvoicePaySerializer(data=request.data, request=request)
-        serializer.is_valid(raise_exception=True)
-        transaction_obj = Transaction.objects.select_related("sender__user").get(
-            uuid=serializer.validated_data["uuid"]
+    def pay_invoice(self, request_data: Dict, request_user_id: id) -> Response:
+        sender = get_user_with_wallet(UserRepo, id=request_user_id)
+        serializer = InvoicePaySerializer(
+            data=request_data, sender_wallet_id=sender.wallet.id
         )
+        serializer.is_valid(raise_exception=True)
+        transaction_obj = TransactionRepo.get(uuid=serializer.validated_data["uuid"])
 
-        with transaction.atomic():
-            transfer_interactor = MakeTransferInteractor()
-            transfer_interactor.set_params(
-                transaction_obj.sender.user,
-                transaction_obj.receiver.user,
-                transaction_obj.sum,
-            )
-            transfer_interactor.execute()
-            sender_wallet = transfer_interactor.get_execution_result()
+        transfer_interactor = MakeTransferInteractor(repo=WalletRepo)
+        transfer_interactor.set_params(
+            transaction_obj.sender_id,
+            transaction_obj.receiver_id,
+            transaction_obj.sum,
+        )
+        transfer_interactor.execute()
+        sender_wallet = transfer_interactor.get_execution_result()
 
-            update_interactor = UpdateTransactionInteractor()
-            update_interactor.set_params(transaction_obj.uuid)
-            update_interactor.execute()
+        update_interactor = UpdateTransactionInteractor(repo=TransactionRepo)
+        update_interactor.set_params(transaction_obj)
+        update_interactor.execute()
 
         return Response(WalletSerializer(sender_wallet).data)

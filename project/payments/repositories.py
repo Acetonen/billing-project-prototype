@@ -1,8 +1,19 @@
-from project.core.repos import BaseORMRepo
-from project.payments.models import Transaction
-from project.payments.data import TransactionData
+from project.core.repos import ORMRepo
+from project.payments.data import TransactionData, WalletData
+from project.payments.models import Transaction, Wallet
 
 
-class TransactionORMRepo(BaseORMRepo):
-    data_class = TransactionData
-    orm_class = Transaction
+class TransactionRepoFactory:
+    @staticmethod
+    def get():
+        return ORMRepo(database_class=Transaction, data_class=TransactionData)
+
+
+class WalletIRepoFactory:
+    @staticmethod
+    def get():
+        return ORMRepo(database_class=Wallet, data_class=WalletData)
+
+
+WalletRepo = WalletIRepoFactory().get()
+TransactionRepo = TransactionRepoFactory().get()

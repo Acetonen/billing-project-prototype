@@ -6,12 +6,14 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('payments', '0001_initial'),
+        ("payments", "0001_initial"),
     ]
 
     operations = [
         migrations.AddConstraint(
-            model_name='wallet',
-            constraint=models.CheckConstraint(check=models.Q(balance__gte=0), name='balance_gte_0'),
+            model_name="wallet",
+            constraint=models.CheckConstraint(
+                check=models.Q(balance__gte=0), name="balance_gte_0"
+            ),
         ),
     ]
