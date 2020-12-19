@@ -1,7 +1,9 @@
 # The Billing project prototype.
 
 *The purpose of this project is to experiment with Service Layer architecture and Repository pattern in Django. And 
-find the ways to easily migrate all project logic to another ORM web framework if we need.*
+find the ways to easily migrate all project logic to another ORM web framework if we need. The views.py, use_cases.py
+(all business logic) ans data.py of each app are completely clean from Django or DjangoORM dependencies. So you can
+migrate it on framework that you like.*
 
 **Requirements:**
 ```
