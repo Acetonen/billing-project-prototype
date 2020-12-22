@@ -1,7 +1,7 @@
 # The Billing project prototype.
 
 *The purpose of this project is to experiment with Service Layer architecture and Repository pattern in Django, 
-find the ways to easily migrate all project logic to another ORM web framework if we need. The views.py, use_cases.py
+find the ways to easily migrate all project logic to another ORM or web framework if we need. The views.py, use_cases.py
 (all business logic) and data.py of each app are completely clean from Django or DjangoORM dependencies. So you can
 migrate it on a framework that you like.*
 
@@ -33,11 +33,11 @@ migrate it on a framework that you like.*
 The architecture of the project was created with *Repository* and *Service Layer* patterns in mind.
 
 **Service Layer** gives to us the purpose to separate all business logic as "use cases" in a separate module as Interactors. 
-(ex: *project/payments/use_cases*). We can maintain all business logic in one place and reuse popular use cases.
+(ex: *project/payments/use_cases.py*). We can maintain all business logic in one place and reuse popular use cases.
 
-**Repository** pattern chose in future purpose to switch to another ORM or raw SQL easily. We can add to our interactors 
-constructors methods (def \_\_init__()) in the future and chose different repo to depend on business needs. 
-We also don't use any ModelSerializers, only plain Serializer. Views also almost clean from ORM code.
+**Repository** pattern chose in future purpose to switch to another ORM or raw SQL easily. We can add new repo types 
+in the future and chose different repo to depend on business needs. `project/core/repos.py`
+We also don't use any ModelSerializers, only plain Serializer. Views also clean from ORM code. `project/payments/views.py`
 
 ## Start Up.
 
@@ -57,7 +57,7 @@ methods in swagger:
 ## Tests.
 
 This project uses BDD style tests in `tests/featues/[some feature].feature` with *pytest_bdd* library.
-The coolest test is asynchronous test race condition with *aiohttp* `project/payments/tests/test_race_condition_in_transaction.py`
+The coolest test is asynchronous test race condition with *aiohttp*: `project/payments/tests/test_race_condition_in_transaction.py`
 
 You can run test with
 ```
@@ -69,8 +69,5 @@ We lock sender table with **SELECT ... FOR UPDATE** (*select_for_update()* in OR
 handle such effect. The worst thing that can be happing is net lag occurs during a transaction, two transactions make 
 simultaneously, and the user has a minus in his wallet. To test such a case we use *aiohttp* library and asynchronous 
 test + lag emulation in logic. You can check it here:
-```
-project/payments/tests/test_race_condition_in_transaction.py
-```
 
 *MIT License*
