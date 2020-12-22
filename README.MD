@@ -1,9 +1,9 @@
 # The Billing project prototype.
 
-*The purpose of this project is to experiment with Service Layer architecture and Repository pattern in Django. And 
+*The purpose of this project is to experiment with Service Layer architecture and Repository pattern in Django, 
 find the ways to easily migrate all project logic to another ORM web framework if we need. The views.py, use_cases.py
-(all business logic) ans data.py of each app are completely clean from Django or DjangoORM dependencies. So you can
-migrate it on framework that you like.*
+(all business logic) and data.py of each app are completely clean from Django or DjangoORM dependencies. So you can
+migrate it on a framework that you like.*
 
 **Requirements:**
 ```
@@ -45,16 +45,19 @@ You can easily start up the project with:
 ```
 docker-compose up
 ```
-When the project will starts. You can go to the swagger page 
-(this is also the main page in the project for easy debug in the current prototype project state) 
+When the project will start. You can go to the swagger page 
+(this is also the main page in the project for easily debug in the current prototype project state) 
 here: [localhost](http://localhost)
 Then you can register user with swagger:
 ![](docs/registration.png)
-For test purposes user creates with is_staff permissions, so you can login with django admin and has access to all api 
+For test purposes user creates with is_staff permissions, so you can log in with django admin and has access to all api 
 methods in swagger:
 ![](docs/login.png)
 
 ## Tests.
+
+This project uses BDD style tests in `tests/featues/[some feature].feature` with *pytest_bdd* library.
+The coolest test is asynchronous test race condition with *aiohttp* `project/payments/tests/test_race_condition_in_transaction.py`
 
 You can run test with
 ```
@@ -64,7 +67,7 @@ The core bottleneck of such financial projects is a Race condition, we handle it
 project.payments.use_cases.MakeTransferInteractor
 We lock sender table with **SELECT ... FOR UPDATE** (*select_for_update()* in ORM) and **UPDATE** (*F('balance') + sum* in ORM) to 
 handle such effect. The worst thing that can be happing is net lag occurs during a transaction, two transactions make 
-simultaneously and the user has a minus in his wallet. To test such a case we use *aiohttp* library and asynchronous 
+simultaneously, and the user has a minus in his wallet. To test such a case we use *aiohttp* library and asynchronous 
 test + lag emulation in logic. You can check it here:
 ```
 project/payments/tests/test_race_condition_in_transaction.py
