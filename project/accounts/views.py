@@ -1,24 +1,24 @@
 from rest_framework.response import Response
 
-from .repositories import UserRepoFactory
+from .repositories import UserRepoFactory, UserRepo
 from .serializers import UserSerializer, RegistrationUserSerializer
 from .use_cases import CreateWalletInteractor, RegisterInteractor
-from ..payments.repositories import WalletIRepoFactory
+from ..payments.repositories import WalletIRepoFactory, WalletRepo
 
 
 class RegistrationView:
-    def post(self, request_data, *args, **kwargs):
+    async def post(self, request_data, *args, **kwargs):
         serializer = RegistrationUserSerializer(data=request_data)
-        serializer.is_valid(raise_exception=True)
+        await serializer.is_valid(raise_exception=True)
 
-        user_interactor = RegisterInteractor(repo=UserRepoFactory.get())
+        user_interactor = RegisterInteractor(repo=UserRepo)
         user_interactor.set_params(serializer.validated_data)
-        user_interactor.execute()
+        await user_interactor.execute()
         user = user_interactor.get_execution_result()
 
-        wallet_interactor = CreateWalletInteractor(repo=WalletIRepoFactory.get())
+        wallet_interactor = CreateWalletInteractor(repo=WalletRepo)
         wallet_interactor.set_params(user)
-        wallet_interactor.execute()
+        await wallet_interactor.execute()
 
         return Response(
             {

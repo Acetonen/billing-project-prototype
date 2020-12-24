@@ -82,7 +82,7 @@ services:
       - DJANGO_SETTINGS_MODULE=project.settings
     command: bash -c "
       python3 manage.py migrate
-      && gunicorn project.wsgi:application
+      && gunicorn -k uvicorn.workers.UvicornWorker project.asgi:application
         -b 0.0.0.0:8000
         --reload
         --worker-connections=1000

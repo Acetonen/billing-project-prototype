@@ -1,3 +1,4 @@
+from asgiref.sync import async_to_sync
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
@@ -63,9 +64,10 @@ class InvoicePaySerializer(ParentSerializer):
         self.sender_wallet_id = kwargs.pop("sender_wallet_id", False)
         super().__init__(*args, **kwargs)
 
-    def validate_uuid(self, data):
+    @async_to_sync
+    async def validate_uuid(self, data):
         try:
-            transaction = TransactionRepo.get(
+            transaction = await TransactionRepo.async_get(
                 uuid=data, sender_id=self.sender_wallet_id
             )
         except ObjectDoesNotExist:

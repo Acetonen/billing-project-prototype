@@ -35,6 +35,9 @@ pytest = "*"
 pytest-xdist = "*"
 django-debug-toolbar = "==3.1"
 pytest-bdd = "*"
+uvicorn = "*"
+uvloop = "*"
+httptools = "*"
 
 [requires]
 python_version = "3.8"
