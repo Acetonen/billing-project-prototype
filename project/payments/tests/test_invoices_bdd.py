@@ -70,7 +70,7 @@ def create_invoice_for_another_user(ac, sender_user, receiver_user, response, tr
 
 @when("I pay invoice to this user")
 def pay_incoming_invoice(
-        ac, sender_user, receiver_user, incoming_invoice_uuid, response
+    ac, sender_user, receiver_user, incoming_invoice_uuid, response
 ):
     ac.force_authenticate(user=sender_user)
     response["information"] = ac.post(
@@ -84,10 +84,6 @@ def pay_incoming_invoice(
 # -----------------------------------------------------------------------
 @then("There are invoice information in response with <transfer> sum")
 def check_success_invoice(response, transfer):
-    assert response["information"].data == {
-        "done_time": None,
-        "id": 1,
-        "is_done": False,
-        "sum": str(transfer),
-        "uuid": str(Transaction.objects.get(is_done=False).uuid),
-    }, "not correct invoice in response"
+    assert response["information"].data["sum"] == str(
+        transfer
+    ), "not correct invoice in response"

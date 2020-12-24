@@ -1,6 +1,7 @@
 from decimal import Decimal
 from typing import Union
 
+from asgiref.sync import sync_to_async
 from django.db import models
 from django.db.models.expressions import F
 from django.forms import model_to_dict
@@ -74,3 +75,19 @@ class ORMRepo(AbstractRepo):
         self.orm_class.objects.filter(id=data_instance.id).update(
             **{field: F(field) + value}
         )
+
+    @sync_to_async
+    def async_get(self, *args, **kwargs):
+        return self.get(*args, **kwargs)
+
+    @sync_to_async
+    def async_create(self, **kwargs):
+        return self.create(**kwargs)
+
+    @sync_to_async
+    def async_update(self, *args, **kwargs):
+        return self.update(*args, **kwargs)
+
+    @sync_to_async
+    def async_update_incrementally(self, *args, **kwargs):
+        return self.update_incrementally(*args, **kwargs)

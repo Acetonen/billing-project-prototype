@@ -25,8 +25,8 @@ class CreateTransactionInteractor(AbstractUseCase):
         self.sum = sum_
         self.invoice = invoice
 
-    def execute(self):
-        object_id = self.repo.create(
+    async def execute(self):
+        object_id = await self.repo.async_create(
             sender_id=self.sender_wallet.id,
             receiver_id=self.receiver_wallet.id,
             sum=self.sum,
@@ -34,7 +34,7 @@ class CreateTransactionInteractor(AbstractUseCase):
             done_time=timezone.now() if not self.invoice else None,
             is_done=False if self.invoice else True,
         )  # as it invoice, not payment
-        self.result_of_execution = self.repo.get(id=object_id)
+        self.result_of_execution = await self.repo.async_get(id=object_id)
 
     def get_execution_result(self) -> TransactionData:
         return super().get_execution_result()
@@ -46,12 +46,12 @@ class UpdateTransactionInteractor(AbstractUseCase):
     def set_params(self, transaction_data: TransactionData):
         self.transaction_data = transaction_data
 
-    def execute(self):
+    async def execute(self):
         self.transaction_data.is_done = True
         self.transaction_data.done_time = timezone.now()
-        object_id = self.repo.update(self.transaction_data)
+        object_id = await self.repo.async_update(self.transaction_data)
 
-        self.result_of_execution = self.repo.get(id=object_id)
+        self.result_of_execution = await self.repo.async_get(id=object_id)
 
     def get_execution_result(self) -> TransactionData:
         return super().get_execution_result()
@@ -75,9 +75,11 @@ class UpdateWalletBalanceInteractor(AbstractUseCase):
         self.receiver_wallet = receiver_wallet
         self.sum = sum_
 
-    def execute(self):
-        self.repo.update_incrementally(self.receiver_wallet, "balance", self.sum)
-        self.result_of_execution = self.repo.get(id=self.receiver_wallet.id)
+    async def execute(self):
+        await self.repo.async_update_incrementally(
+            self.receiver_wallet, "balance", self.sum
+        )
+        self.result_of_execution = await self.repo.async_get(id=self.receiver_wallet.id)
 
     def get_execution_result(self) -> WalletData:
         return super().get_execution_result()
@@ -91,18 +93,20 @@ class MakeTransferInteractor(AbstractUseCase):
         self.receiver_wallet_id = receiver_wallet_id
         self.sum = sum_
 
-    def execute(self):
+    async def execute(self):
         """
         Use with_lock=True (select_for_update in repo) to lock rows and prevent race conditions.
         Is need to select_for_update only sender wallet to prevent go to 'under zero', receiver will be enough
         with F('balance') + sum.
         """
-        sender_wallet = self.repo.get(id=self.sender_wallet_id, with_lock=True)
+        sender_wallet = await self.repo.async_get(
+            id=self.sender_wallet_id, with_lock=True
+        )
 
         if self.sum > sender_wallet.balance:
             raise ValidationError("Not enough money to make transfer.")
 
-        receiver_wallet = self.repo.get(
+        receiver_wallet = await self.repo.async_get(
             id=self.receiver_wallet_id,
         )
 
@@ -112,12 +116,12 @@ class MakeTransferInteractor(AbstractUseCase):
 
         update_interactor = UpdateWalletBalanceInteractor(repo=self.repo)
         update_interactor.set_params(sender_wallet, -self.sum)
-        update_interactor.execute()
+        await update_interactor.execute()
         sender_wallet = update_interactor.get_execution_result()
 
         update_interactor = UpdateWalletBalanceInteractor(repo=self.repo)
         update_interactor.set_params(receiver_wallet, self.sum)
-        update_interactor.execute()
+        await update_interactor.execute()
 
         self.result_of_execution = sender_wallet
 

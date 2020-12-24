@@ -35,5 +35,3 @@ EXPOSE 8000
 COPY docker/billing/*.sh /usr/bin/
 
 RUN chmod +x /usr/bin/*.sh
-
-RUN python3 manage.py collectstatic --noinput
