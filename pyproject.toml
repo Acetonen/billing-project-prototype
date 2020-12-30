@@ -1,15 +1,11 @@
-[[source]]
-name = "pypi"
-url = "https://pypi.org/simple"
-verify_ssl = true
+[tool.poetry]
+name = "billing-prototype-django"
+version = "0.1.0"
+description = ""
+authors = ["Anton Kovalev <acetonen@gmail.com>"]
 
-[dev-packages]
-black = "==20.8b1"
-mypy = "*"
-django-stubs = "*"
-djangorestframework-stubs = "*"
-
-[packages]
+[tool.poetry.dependencies]
+python = "^3.8"
 django-extensions = "*"
 django-model-utils = "*"
 django-rest-auth = "*"
@@ -39,5 +35,12 @@ uvicorn = "*"
 uvloop = "*"
 httptools = "*"
 
-[requires]
-python_version = "3.8"
+[tool.poetry.dev-dependencies]
+black = "==20.8b1"
+mypy = "*"
+django-stubs = "*"
+djangorestframework-stubs = "*"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

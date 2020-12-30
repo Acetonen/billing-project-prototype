@@ -17,14 +17,16 @@ RUN mkdir -p /code/project/static
 
 WORKDIR /code/
 
-COPY Pipfile* ./
+COPY poetry.lock ./
+COPY pyproject.toml ./
 
-RUN pip install -U pip pipenv gunicorn \
+RUN pip install -U pip poetry gunicorn \
+    && poetry config virtualenvs.create false \
     && case $ENVIRONMENT in \
-          dev*) pipenv install --system --dev;; \
-          *)    pipenv install --system;; \
+          dev*) poetry install;; \
+          *)    poetry install --no-dev;; \
         esac \
-    && pip uninstall -y pipenv virtualenv virtualenv-clone \
+    && pip uninstall -y poetry virtualenv virtualenv-clone \
     && rm -Rf /root/.cache/pip/
 
 
