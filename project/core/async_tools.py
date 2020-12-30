@@ -1,3 +1,6 @@
+from functools import update_wrapper
+from pprint import pprint
+
 from rest_framework.response import Response
 from rest_framework import status
 
@@ -23,7 +26,9 @@ class AsyncMixin:
             # wait for the `dispatch` method
             return await view(*args, **kwargs)
 
-        async_view.csrf_exempt = True
+        for key, value in view.__dict__.items():
+            setattr(async_view, key, value)
+
         return async_view
 
     async def dispatch(self, request, *args, **kwargs):
