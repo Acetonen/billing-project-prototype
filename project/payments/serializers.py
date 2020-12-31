@@ -4,7 +4,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from project.core.serializers import ParentSerializer
-from project.payments.models import Transaction
 from project.payments.repositories import TransactionRepo
 
 UserModel = get_user_model()
@@ -49,8 +48,8 @@ class TransactionCreateSerializer(ParentSerializer):
 
 class TransactionSerializer(ParentSerializer):
     id = serializers.IntegerField(read_only=True)
-    sender = serializers.IntegerField(read_only=True)
-    receiver = serializers.IntegerField(read_only=True)
+    sender = WalletSerializer(read_only=True)
+    receiver = WalletSerializer(read_only=True)
     sum = serializers.DecimalField(max_digits=9, decimal_places=2, read_only=True)
     done_time = serializers.DateTimeField(read_only=True, allow_null=True)
     is_done = serializers.BooleanField(read_only=True)

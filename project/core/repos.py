@@ -4,24 +4,29 @@ from typing import Union
 from asgiref.sync import sync_to_async
 from django.db import models
 from django.db.models.expressions import F
-from django.forms import model_to_dict
 
-from project.core.abstract_data_types import AbstractRepo, AbstractData
+from project.core.abstract_data_types import AbstractRepo
+from project.core.data import BaseData
 
 
 class ORMRepo(AbstractRepo):
-    def _decode(self, orm_model: models.Model) -> AbstractData:
+    def _decode(self, orm_model: models.Model) -> BaseData:
         """
         Decode ORM model to DataClass.
         """
-        return self.data_class(**model_to_dict(orm_model))  # noqa
+
+        return self.data_class.from_orm(orm_model)
 
     def _set_attrs_for_update(self, orm_model, data_instance):
         """
         Set all attributes from dataclass model to orm_model for update.
         """
         for field in data_instance.fields:
-            setattr(orm_model, field, getattr(data_instance, field))
+            # orm_field = f"{field}_id" if field in data_instance._reference else field
+            try:
+                setattr(orm_model, field, getattr(data_instance, field))
+            except ValueError:  # try to represent field as id
+                setattr(orm_model, f"{field}_id", getattr(data_instance, field).id)
 
         return orm_model
 
@@ -43,10 +48,9 @@ class ORMRepo(AbstractRepo):
         Create new object in ORM.
         """
         orm_model = self.orm_class.objects.create(**kwargs)
-
         return orm_model.id
 
-    def update(self, data_instance: AbstractData, with_lock: bool = False) -> int:
+    def update(self, data_instance: BaseData, with_lock: bool = False) -> int:
         """
         data_instance: DataClass
         with_lock: pass True if you want to use SELECT ... FOR UPDATE in SQL.
@@ -57,7 +61,7 @@ class ORMRepo(AbstractRepo):
 
         return orm_model.id
 
-    def get(self, with_lock: bool = False, **kwargs) -> AbstractData:
+    def get(self, with_lock: bool = False, **kwargs) -> BaseData:
         """
         Get object from ORM and return dataclass instance.
         with_lock: pass True if you want to use SELECT ... FOR UPDATE in SQL.
@@ -68,7 +72,7 @@ class ORMRepo(AbstractRepo):
 
     def update_incrementally(
         self,
-        data_instance: AbstractData,
+        data_instance: BaseData,
         field: str,
         value: Union[int, Decimal, float],
     ):

@@ -105,9 +105,7 @@ def check_invoice_in_database():
 
 @then("There is no invoice record in database")
 def check_invoice_in_database():
-    assert (
-        Transaction.objects.filter(is_done=False).count() == 0
-    ), "invoice doesn't created in database"
+    assert Transaction.objects.filter(is_done=False).count() == 0, "invoice in database"
 
 
 @then("My wallet balance is <sender_result>")

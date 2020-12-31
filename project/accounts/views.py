@@ -1,18 +1,15 @@
-from rest_framework.response import Response
+from typing import Dict
 
-from .repositories import UserRepoFactory, UserRepo
-from .serializers import UserSerializer, RegistrationUserSerializer
+from .data import UserData
+from .repositories import UserRepo
 from .use_cases import CreateWalletInteractor, RegisterInteractor
-from ..payments.repositories import WalletIRepoFactory, WalletRepo
+from ..payments.repositories import WalletRepo
 
 
 class RegistrationView:
-    async def post(self, request_data, *args, **kwargs):
-        serializer = RegistrationUserSerializer(data=request_data)
-        await serializer.is_valid(raise_exception=True)
-
+    async def post(self, validated_data: Dict, *args, **kwargs) -> UserData:
         user_interactor = RegisterInteractor(repo=UserRepo)
-        user_interactor.set_params(serializer.validated_data)
+        user_interactor.set_params(validated_data)
         await user_interactor.execute()
         user = user_interactor.get_execution_result()
 
@@ -20,9 +17,4 @@ class RegistrationView:
         wallet_interactor.set_params(user)
         await wallet_interactor.execute()
 
-        return Response(
-            {
-                "user": UserSerializer(user).data,
-                "message": "User Created Successfully.  Now perform Login to get your token",
-            }
-        )
+        return user

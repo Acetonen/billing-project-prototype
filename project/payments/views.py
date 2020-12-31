@@ -1,17 +1,10 @@
 from collections import namedtuple
-from typing import Dict
+from typing import Dict, Union
 
-from rest_framework.response import Response
-
+from .data import WalletData, TransactionData
 from .repositories import (
     WalletRepo,
     TransactionRepo,
-)
-from .serializers import (
-    WalletSerializer,
-    TransactionSerializer,
-    TransactionCreateSerializer,
-    InvoicePaySerializer,
 )
 from .use_cases import (
     CreateTransactionInteractor,
@@ -20,8 +13,6 @@ from .use_cases import (
     UpdateWalletBalanceInteractor,
     MakeTransferInteractor,
 )
-from ..accounts.repositories import UserRepo
-from ..accounts.use_cases import get_user_with_wallet
 
 TransactionCleanedData = namedtuple(
     "TransactionCleanedData", "sender receiver validated_data"
@@ -29,34 +20,16 @@ TransactionCleanedData = namedtuple(
 
 
 class BalanceView:
-    async def get(self, request_user_id: int):
+    async def get(self, request_user_id: int) -> WalletData:
         wallet = await WalletRepo.async_get(user_id=request_user_id)
-        serializer = WalletSerializer(wallet)
 
-        return Response(serializer.data)
+        return wallet
 
 
 class TransactionsView:
-    async def _get_sender_and_receiver_for_transaction(
-        self, request_data: Dict, request_user_id: int, is_transfer: bool = False
-    ) -> TransactionCleanedData:
-        sender = await get_user_with_wallet(repo=UserRepo, id=request_user_id)
-        serializer = TransactionCreateSerializer(
-            data=request_data, request_user_email=sender.email, is_transfer=is_transfer
-        )
-        await serializer.is_valid(raise_exception=True)
-        receiver = await get_user_with_wallet(
-            repo=UserRepo, email=serializer.validated_data["user_email"]
-        )
-
-        return TransactionCleanedData(sender, receiver, serializer.validated_data)
-
     async def create_invoice(
-        self, request_data: Dict, request_user_id: int
-    ) -> Response:
-        cleaned_data = await self._get_sender_and_receiver_for_transaction(
-            request_data, request_user_id
-        )
+        self, cleaned_data: TransactionCleanedData
+    ) -> TransactionData:
 
         invoice_interactor = CreateInvoiceInteractor(repo=TransactionRepo)
         invoice_interactor.set_params(
@@ -68,12 +41,11 @@ class TransactionsView:
         await invoice_interactor.execute()
         transaction_obj = invoice_interactor.get_execution_result()
 
-        return Response(TransactionSerializer(transaction_obj).data)
+        return transaction_obj
 
-    async def make_deposits(self, request_data: Dict, request_user_id: int) -> Response:
-        cleaned_data = await self._get_sender_and_receiver_for_transaction(
-            request_data, request_user_id
-        )
+    async def make_deposits(
+        self, cleaned_data: TransactionCleanedData
+    ) -> Union[WalletData, Dict]:
 
         update_interactor = UpdateWalletBalanceInteractor(repo=WalletRepo)
         update_interactor.set_params(
@@ -93,17 +65,17 @@ class TransactionsView:
 
         if cleaned_data.sender == cleaned_data.receiver:
             # Return wallet balance if user make deposits for himself:
-            return Response(WalletSerializer(wallet).data)
+            response_data = wallet
         else:
             # Return confirmation if user make deposits for another user:
-            return Response({"details": "success"})
+            response_data = {"details": "success"}
+
+        return response_data
 
     async def transfer_to_another_user(
-        self, request_data: Dict, request_user_id: int
-    ) -> Response:
-        cleaned_data = await self._get_sender_and_receiver_for_transaction(
-            request_data, request_user_id, is_transfer=True
-        )
+        self,
+        cleaned_data: TransactionCleanedData,
+    ) -> WalletData:
 
         transfer_interactor = MakeTransferInteractor(repo=WalletRepo)
         transfer_interactor.set_params(
@@ -123,22 +95,17 @@ class TransactionsView:
         )
         await transaction_interactor.execute()
 
-        return Response(WalletSerializer(sender_wallet).data)
+        return sender_wallet
 
-    async def pay_invoice(self, request_data: Dict, request_user_id: id) -> Response:
-        sender = await get_user_with_wallet(UserRepo, id=request_user_id)
-        serializer = InvoicePaySerializer(
-            data=request_data, sender_wallet_id=sender.wallet.id
-        )
-        await serializer.is_valid(raise_exception=True)
+    async def pay_invoice(self, cleaned_invoice_data: Dict) -> WalletData:
         transaction_obj = await TransactionRepo.async_get(
-            uuid=serializer.validated_data["uuid"]
+            uuid=cleaned_invoice_data["uuid"]
         )
 
         transfer_interactor = MakeTransferInteractor(repo=WalletRepo)
         transfer_interactor.set_params(
-            transaction_obj.sender_id,
-            transaction_obj.receiver_id,
+            transaction_obj.sender.id,
+            transaction_obj.receiver.id,
             transaction_obj.sum,
         )
         await transfer_interactor.execute()
@@ -148,4 +115,4 @@ class TransactionsView:
         update_interactor.set_params(transaction_obj)
         await update_interactor.execute()
 
-        return Response(WalletSerializer(sender_wallet).data)
+        return sender_wallet
