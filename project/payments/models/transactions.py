@@ -1,10 +1,10 @@
 from django.db import models
-
+import uuid
 from project.core.models import TimeStampParentModel
 
 
 class Transaction(TimeStampParentModel):
-    uuid = models.UUIDField(db_index=True)
+    uuid = models.UUIDField(db_index=True, default=uuid.uuid4)
     sender = models.ForeignKey(
         "payments.Wallet",  # noqa
         on_delete=models.CASCADE,

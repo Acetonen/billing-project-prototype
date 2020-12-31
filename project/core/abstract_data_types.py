@@ -2,25 +2,9 @@
 
 from abc import ABC, abstractmethod
 from decimal import Decimal
-from typing import Any, Iterable, Union
+from typing import Any, Union
 
-
-class AbstractData(ABC):
-    """
-    Base data class instance to use as data objects in all project logic.
-    """
-
-    id: int
-
-    @property
-    def fields(self) -> Iterable[str]:
-        return self.__slots__
-
-    def __init__(self, **kwargs):
-        """convert field to field_id to represent Foreign key"""
-        for field in self.__slots__:
-            field_name = field[:-3] if field.endswith("_id") else field
-            setattr(self, field, kwargs[field_name])
+from project.core.data import BaseData
 
 
 class AbstractUseCase(ABC):
@@ -63,7 +47,7 @@ class AbstractRepo(ABC):
     """
 
     database_class: Any
-    data_class: AbstractData
+    data_class: BaseData
 
     def __init__(self, database_class, data_class):
         self.orm_class = database_class
@@ -79,7 +63,7 @@ class AbstractRepo(ABC):
         pass
 
     @abstractmethod
-    def update(self, data_instance: AbstractData, with_lock: bool = False) -> int:
+    def update(self, data_instance: BaseData, with_lock: bool = False) -> int:
         """
         data_instance: DataClass
         with_lock: pass True if you want to protect object simultaneous update.
@@ -89,7 +73,7 @@ class AbstractRepo(ABC):
     @abstractmethod
     def update_incrementally(
         self,
-        data_instance: AbstractData,
+        data_instance: BaseData,
         field: str,
         value: Union[int, Decimal, float],
     ):
@@ -101,7 +85,7 @@ class AbstractRepo(ABC):
     # Queries:
     # ---------------------------------------------------------------------------
     @abstractmethod
-    def get(self, with_lock: bool = False, **kwargs) -> AbstractData:
+    def get(self, with_lock: bool = False, **kwargs) -> BaseData:
         """
         Get object from ORM and return dataclass instance.
         with_lock: pass True if you want to protect object simultaneous update.

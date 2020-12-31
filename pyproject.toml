@@ -34,6 +34,7 @@ pytest-bdd = "*"
 uvicorn = "*"
 uvloop = "*"
 httptools = "*"
+pydantic = "^1.7.3"
 
 [tool.poetry.dev-dependencies]
 black = "==20.8b1"
